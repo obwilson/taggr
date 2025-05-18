@@ -9,7 +9,7 @@ class Users(db.Model):
     email = db.Column(db.String(100), nullable=False, unique=True)
     date_added = db.Column(db.DateTime, default=datetime.now())
 
-    # Password
+    # Password hashing
     password_hash = db.Column(db.String(256))
 
     @property

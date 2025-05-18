@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, EmailField, PasswordField, BooleanField, ValidationError
-from wtforms.validators import DataRequired, Length, EqualTo
+from wtforms import StringField, SubmitField, EmailField, PasswordField
+from wtforms.validators import DataRequired, Length
 from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
@@ -38,9 +38,8 @@ class SignUpForm(FlaskForm):
             ),
             Length(
                 max=20,
-                message='Password must be shorter than 30 characters.',
+                message='Password must be shorter than 20 characters.',
             ),
-            EqualTo('confirm_password', message='Passwords do not match.')
         ],
     )
     confirm_password = PasswordField(
@@ -53,7 +52,7 @@ class SignUpForm(FlaskForm):
             ),
             Length(
                 max=20,
-                message='Password must be shorter than 30 characters.',
+                message='Password must be shorter than 20 characters.',
             ),
         ],
     )
@@ -86,20 +85,22 @@ def index():
 def signup():
     form = SignUpForm()
     if form.validate_on_submit():
-        user = Users.query.filter_by(email=form.email.data).first()
-        if user is None:
-            password_hash = generate_password_hash(form.password.data, 'pbkdf2:sha256')
+        if form.password.data == form.confirm_password.data:
+            user = Users.query.filter_by(email=form.email.data).first()
+            if user is None:
+                password_hash = generate_password_hash(form.password.data, 'pbkdf2:sha256')
 
-            user = Users(
-                username = form.username.data,
-                email = form.email.data,
-                password_hash = password_hash
-            )
+                user = Users(
+                    username = form.username.data,
+                    email = form.email.data,
+                    password_hash = password_hash
+                )
 
-            db.session.add(user)
-            db.session.commit()
-            flash(f'{user.verify_password(form.password.data)}')
-            return redirect('/home')
+                db.session.add(user)
+                db.session.commit()
+                return redirect('/home')
+        else:
+            flash("Passwords do not match.")
 
     return render_template('signup.html', form=form)
 
