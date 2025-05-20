@@ -36,6 +36,14 @@
 
     <br/>
     <div class="container">
+        {% for message in get_flashed_messages() %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+        <br/>
+        
         <h1 class="d-flex justify-content-center">Log In</h1>
         <br/>
         <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
