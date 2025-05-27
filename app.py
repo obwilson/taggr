@@ -136,10 +136,22 @@ def login():
 
     return render_template('login.html', form=form)
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("Successfully Logged Out.")
+    return redirect('/login')
+
 @app.route('/home')
 @login_required
 def home():
-    return render_template('home.html')
+    users = Users.query.order_by(Users.date_added)
+    return render_template('home.html', users=users)
+
+@app.route('/profile/<username>', methods=['GET', 'POST'])
+def profile(username):
+    return render_template('profile.html', username=username)
 
 if __name__ == '__main__':
     db_init(app)
