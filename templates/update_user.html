@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %} Edit Account {% endblock%}
+
+{% block body %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        {{ form.username(class="form-control form-control-lg col-sm", value=current_user.username) }}
+        <br/>
+        {{ form.submit(class="btn btn-secondary") }}
+    </form>
+{% endblock %}

@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %} Edit Account {% endblock%}
-
-{% block body %}
-    <h1>{{ username }}</h1>
-    {% if username == current_user.username and current_user.is_authenticated %}
-        <p>current user!</p>
-    {% endif %}
-{% endblock %}

@@ -3,10 +3,4 @@
 
 {% block body %}
     <h1>home page!</h1>
-    <br/>
-    <strong>Profiles:</strong>
-    <br/>
-    {% for user in users %}
-        <a href="{{ url_for('profile', username=user.username) }}">{{ user.username }}</a>
-    {% endfor %}
 {% endblock %}

@@ -84,6 +84,47 @@ class LoginForm(FlaskForm):
     )
     submit = SubmitField('Log In')
 
+class ChangeUsernameForm(FlaskForm):
+    username = StringField(
+        # label='Change Username',
+        validators=[
+            DataRequired(),
+            Length(min=3, max=12),
+        ],
+    )
+    submit = SubmitField('Change Username')
+
+class ChangePasswordForm(FlaskForm):
+    password = PasswordField(
+        label='Password',
+        validators=[
+            DataRequired(),
+            Length(
+                min=8,
+                message='Password must be longer than 8 characters.',
+            ),
+            Length(
+                max=20,
+                message='Password must be shorter than 20 characters.',
+            ),
+        ],
+    )
+    confirm_password = PasswordField(
+        label='Confirm Password',
+        validators=[
+            DataRequired(),
+            Length(
+                min=8,
+                message='Password must be longer than 8 characters.',
+            ),
+            Length(
+                max=20,
+                message='Password must be shorter than 20 characters.',
+            ),
+        ],
+    )
+    submit = SubmitField('Change Password')
+
 # Index Page
 @app.route('/')
 def index():
@@ -149,9 +190,22 @@ def home():
     users = Users.query.order_by(Users.date_added)
     return render_template('home.html', users=users)
 
-@app.route('/profile/<username>', methods=['GET', 'POST'])
-def profile(username):
-    return render_template('profile.html', username=username)
+@app.route('/update-user', methods=['GET', 'POST'])
+@login_required
+def update_user():
+    form = ChangeUsernameForm()
+
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        try:
+            db.session.commit()
+            flash("Account info updated.")
+            return render_template('update_user.html', form=form)
+        except:
+            flash("An error has occured. Please try again.")
+            return render_template('update_user.html', form=form)
+
+    return render_template('update_user.html', form=form)
 
 if __name__ == '__main__':
     db_init(app)
