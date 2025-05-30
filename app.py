@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, flash
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, EmailField, PasswordField
-from wtforms.validators import DataRequired, Length
+from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
 
@@ -84,21 +84,24 @@ class LoginForm(FlaskForm):
     )
     submit = SubmitField('Log In')
 
-class ChangeUsernameForm(FlaskForm):
+class UpdateAccountForm(FlaskForm):
     username = StringField(
-        # label='Change Username',
+        label='Username',
         validators=[
             DataRequired(),
             Length(min=3, max=12),
         ],
     )
-    submit = SubmitField('Change Username')
-
-class ChangePasswordForm(FlaskForm):
-    password = PasswordField(
-        label='Password',
+    email = EmailField(
+        label='Email',
         validators=[
             DataRequired(),
+        ],
+    )
+    password = PasswordField(
+        label='New Password',
+        validators=[
+            Optional(),
             Length(
                 min=8,
                 message='Password must be longer than 8 characters.',
@@ -112,7 +115,7 @@ class ChangePasswordForm(FlaskForm):
     confirm_password = PasswordField(
         label='Confirm Password',
         validators=[
-            DataRequired(),
+            Optional(),
             Length(
                 min=8,
                 message='Password must be longer than 8 characters.',
@@ -123,7 +126,7 @@ class ChangePasswordForm(FlaskForm):
             ),
         ],
     )
-    submit = SubmitField('Change Password')
+    submit = SubmitField('Update Information')
 
 # Index Page
 @app.route('/')
@@ -193,10 +196,32 @@ def home():
 @app.route('/update-user', methods=['GET', 'POST'])
 @login_required
 def update_user():
-    form = ChangeUsernameForm()
+    form = UpdateAccountForm()
 
     if form.validate_on_submit():
-        current_user.username = form.username.data
+
+        if form.username.data != current_user.username:
+            if Users.query.filter_by(username=form.username.data).first():
+                flash("Username already exists.")
+            else:
+                current_user.username = form.username.data
+
+        if form.email.data != current_user.email:
+            if Users.query.filter_by(email=form.email.data).first():
+                flash("Email already exists.")
+            else:
+                current_user.email = form.email.data
+
+        if form.password.data:
+            if form.password.data == form.confirm_password.data:
+                password_hash = generate_password_hash(
+                    form.password.data, 'pbkdf2:sha256'
+                )
+
+                current_user.password_hash = password_hash
+            else:
+                flash("Passwords do not match.")
+
         try:
             db.session.commit()
             flash("Account info updated.")

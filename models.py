@@ -13,13 +13,12 @@ class Users(db.Model, UserMixin):
     # Password hashing
     password_hash = db.Column(db.String(256))
 
-    @property
-    def password(self):
-        raise AttributeError('Password is not a readable attribute.')
-    
-    @password.setter
-    def password(self, password):
-        self.password_hash = generate_password_hash(password)
-
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+
+class Photos(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user = db.Column(db.Integer, nullable=False)
+    file_path = db.Column(db.String(256), nullable=False)
+    date_added = db.Column(db.DateTime, default=datetime.now())

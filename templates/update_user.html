@@ -4,8 +4,25 @@
 {% block body %}
     <form method="POST">
         {{ form.hidden_tag() }}
-
+        
+        <h4>Username</h4>
         {{ form.username(class="form-control form-control-lg col-sm", value=current_user.username) }}
+        <br/>
+        {{ form.email(class="form-control form-control-lg col-sm", value=current_user.email) }}
+        <br/><br/>
+        <h3>Change Password</h3>
+        {{ form.password.label(
+            class="form-label"
+        ) }}
+        {{ form.password(class="form-control") }}
+        <div class="form-text">
+            Your password must be 8-20 characters long.
+        </div>
+        <br/>
+        {{ form.confirm_password.label(
+            class="form-label"
+        ) }}
+        {{ form.confirm_password(class="form-control") }}
         <br/>
         {{ form.submit(class="btn btn-secondary") }}
     </form>
