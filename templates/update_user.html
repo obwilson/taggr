@@ -26,4 +26,25 @@
         <br/>
         {{ form.submit(class="btn btn-secondary") }}
     </form>
+    <br/>
+
+    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Account</button>
+
+    <div class="modal fade" id="deleteModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="deleteModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="deleteLabel">Delete account?</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            <div class="modal-body">
+                This action cannot be undone. All uploaded photos and account info will be deleted forever.
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <a type="button" class="btn btn-danger" href="{{ url_for('delete_user') }}">Delete</a>
+            </div>
+          </div>
+        </div>
+    </div>
 {% endblock %}

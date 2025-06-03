@@ -254,6 +254,27 @@ def update_user():
 
     return render_template('update_user.html', form=form)
 
+@app.route("/delete-user")
+@login_required
+def delete_user():
+    user_to_delete = current_user
+    photos = Photos.query.filter_by(user=user_to_delete.id)
+
+    try:
+        if photos:
+            for photo in photos:
+                os.remove(photo.file_path)
+                db.session.delete(photo)
+                print(f"Deleted {photo.file_path} from user {photo.user}")
+
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        flash("Account deleted successfully.")
+        return redirect('/')
+    except:
+        flash("An error has occured. Please try again.")
+        return redirect('/update-user')
+
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
