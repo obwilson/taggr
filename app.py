@@ -1,17 +1,29 @@
 from flask import Flask, render_template, redirect, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, EmailField, PasswordField
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+from flask_uploads import UploadSet, configure_uploads
+from wtforms import StringField, SubmitField, EmailField, PasswordField, FileField
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
+import os
 
 app = Flask(__name__)
 
-from models import Users
+from models import Users, Photos
 from db import db, db_init
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['UPLOADED_PHOTOS_DEST'] = "static/uploads"
 app.config['SECRET_KEY'] = 'photo'
+
+ALLOWED_FILES = ["png", "jpg", "jpeg"]
+
+photos = UploadSet("photos", ALLOWED_FILES)
+configure_uploads(app, photos)
+
+os.makedirs(app.config['UPLOADED_PHOTOS_DEST'], exist_ok=True)
 
 # User Login
 login_manager = LoginManager() 
@@ -128,6 +140,16 @@ class UpdateAccountForm(FlaskForm):
     )
     submit = SubmitField('Update Information')
 
+class PhotoForm(FlaskForm):
+    photo = FileField(
+        "Upload Photo",
+        validators=[
+            FileAllowed(photos),
+            FileRequired(),
+        ]
+    )
+    submit = SubmitField('Upload Photo')
+
 # Index Page
 @app.route('/')
 def index():
@@ -231,6 +253,33 @@ def update_user():
             return render_template('update_user.html', form=form)
 
     return render_template('update_user.html', form=form)
+
+@app.route("/upload", methods=["GET", "POST"])
+@login_required
+def upload():
+    form = PhotoForm()
+
+    if form.validate_on_submit():
+        photo = form.photo.data
+
+        if photo:
+            file_name = secure_filename(photo.filename)
+            file_path = os.path.join(
+                app.config['UPLOADED_PHOTOS_DEST'],
+                file_name
+            )
+
+            photo.save(file_path)
+
+            new_photo = Photos(user=current_user.id, file_path=file_path)
+            db.session.add(new_photo)
+            db.session.commit()
+
+            flash(f"{photo.filename} uploaded successfully.")
+
+            return redirect("/upload")
+        
+    return render_template("upload.html", form=form)
 
 if __name__ == '__main__':
     db_init(app)
