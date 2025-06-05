@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -212,8 +213,8 @@ def logout():
 @app.route('/home')
 @login_required
 def home():
-    users = Users.query.order_by(Users.date_added)
-    return render_template('home.html', users=users)
+    photos = Photos.query.filter_by(user=current_user.id)
+    return render_template('home.html', photos=photos)
 
 @app.route('/update-user', methods=['GET', 'POST'])
 @login_required
@@ -284,10 +285,16 @@ def upload():
         photo = form.photo.data
 
         if photo:
-            file_name = secure_filename(photo.filename)
-            file_path = os.path.join(
+            folder_path = os.path.join(
                 app.config['UPLOADED_PHOTOS_DEST'],
-                file_name
+                str(current_user.id),
+            )
+            os.makedirs(folder_path, exist_ok=True)
+
+            file_name = secure_filename(f"{datetime.now()}_{photo.filename}")
+            file_path = os.path.join(
+                folder_path,
+                file_name,
             )
 
             photo.save(file_path)

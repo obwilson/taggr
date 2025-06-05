@@ -2,5 +2,11 @@
 {% block title %} Home {% endblock%}
 
 {% block body %}
-    <h1>home page!</h1>
+    {% if photos %}
+        {% for photo in photos %}
+            <img src="{{ photo.file_path }}">
+        {% endfor %}
+    {% else %}
+        <h1>No Photos Uploaded.</h1>
+    {% endif %}
 {% endblock %}

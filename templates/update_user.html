@@ -24,11 +24,11 @@
         ) }}
         {{ form.confirm_password(class="form-control") }}
         <br/>
-        {{ form.submit(class="btn btn-secondary") }}
-    </form>
-    <br/>
-
-    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Account</button>
+        <div class="d-flex justify-content-between">
+            {{ form.submit(class="btn btn-secondary p-2") }}
+            <button type="button" class="btn btn-danger p-2" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Account</button>
+        </div>
+    </form> 
 
     <div class="modal fade" id="deleteModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="deleteModal" aria-hidden="true">
         <div class="modal-dialog">
