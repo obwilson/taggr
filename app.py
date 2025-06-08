@@ -7,8 +7,9 @@ from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
-import os
+from PIL import Image
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -284,6 +285,14 @@ def upload():
     if form.validate_on_submit():
         photo = form.photo.data
 
+        try:
+            Image.open(photo).verify()
+            photo.seek(0)
+        except:
+            flash("The uploaded image is either invalid or contains corrupted data. Please try again with a different file.")
+
+            return redirect("/upload")
+
         if photo:
             folder_path = os.path.join(
                 app.config['UPLOADED_PHOTOS_DEST'],
@@ -291,7 +300,7 @@ def upload():
             )
             os.makedirs(folder_path, exist_ok=True)
 
-            file_name = secure_filename(f"{datetime.now()}_{photo.filename}")
+            file_name = secure_filename(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_{photo.filename}")
             file_path = os.path.join(
                 folder_path,
                 file_name,
@@ -305,7 +314,7 @@ def upload():
 
             flash(f"{photo.filename} uploaded successfully.")
 
-            return redirect("/upload")
+            return redirect("/upload")         
         
     return render_template("upload.html", form=form)
 
