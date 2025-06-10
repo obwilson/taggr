@@ -6,7 +6,13 @@ from wtforms import StringField, SubmitField, EmailField, PasswordField, FileFie
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
-from flask_login import login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import (
+    login_user,
+    LoginManager,
+    login_required,
+    logout_user,
+    current_user,
+)
 from PIL import Image
 from datetime import datetime
 import os
@@ -16,131 +22,136 @@ app = Flask(__name__)
 from models import Users, Photos
 from db import db, db_init
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-app.config['UPLOADED_PHOTOS_DEST'] = "static/uploads"
-app.config['SECRET_KEY'] = 'photo'
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+app.config["UPLOADED_PHOTOS_DEST"] = "static/uploads"
+app.config["SECRET_KEY"] = "photo"
 
 ALLOWED_FILES = ["png", "jpg", "jpeg"]
 
 photos = UploadSet("photos", ALLOWED_FILES)
 configure_uploads(app, photos)
 
-os.makedirs(app.config['UPLOADED_PHOTOS_DEST'], exist_ok=True)
+os.makedirs(app.config["UPLOADED_PHOTOS_DEST"], exist_ok=True)
 
 # User Login
-login_manager = LoginManager() 
+login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = "login"
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
+
 # Sign Up Form Class
 class SignUpForm(FlaskForm):
     username = StringField(
-        label='Username',
+        label="Username",
         validators=[
             DataRequired(),
             Length(min=3, max=12),
         ],
     )
     email = EmailField(
-        label='Email',
+        label="Email",
         validators=[
             DataRequired(),
         ],
     )
     password = PasswordField(
-        label='Password',
+        label="Password",
         validators=[
             DataRequired(),
             Length(
                 min=8,
-                message='Password must be longer than 8 characters.',
+                message="Password must be longer than 8 characters.",
             ),
             Length(
                 max=20,
-                message='Password must be shorter than 20 characters.',
+                message="Password must be shorter than 20 characters.",
             ),
         ],
     )
     confirm_password = PasswordField(
-        label='Confirm Password',
+        label="Confirm Password",
         validators=[
             DataRequired(),
             Length(
                 min=8,
-                message='Password must be longer than 8 characters.',
+                message="Password must be longer than 8 characters.",
             ),
             Length(
                 max=20,
-                message='Password must be shorter than 20 characters.',
+                message="Password must be shorter than 20 characters.",
             ),
         ],
     )
-    submit = SubmitField('Sign Up')
+    submit = SubmitField("Sign Up")
+
 
 # Log In Form Class
 class LoginForm(FlaskForm):
     username = StringField(
-        label='Username',
+        label="Username",
         validators=[
             DataRequired(),
             Length(min=3, max=12),
         ],
     )
     password = PasswordField(
-        label='Password',
+        label="Password",
         validators=[
             DataRequired(),
         ],
     )
-    submit = SubmitField('Log In')
+    submit = SubmitField("Log In")
+
 
 class UpdateAccountForm(FlaskForm):
     username = StringField(
-        label='Username',
+        label="Username",
         validators=[
             DataRequired(),
             Length(min=3, max=12),
         ],
     )
     email = EmailField(
-        label='Email',
+        label="Email",
         validators=[
             DataRequired(),
         ],
     )
     password = PasswordField(
-        label='New Password',
+        label="New Password",
         validators=[
             Optional(),
             Length(
                 min=8,
-                message='Password must be longer than 8 characters.',
+                message="Password must be longer than 8 characters.",
             ),
             Length(
                 max=20,
-                message='Password must be shorter than 20 characters.',
+                message="Password must be shorter than 20 characters.",
             ),
         ],
     )
     confirm_password = PasswordField(
-        label='Confirm Password',
+        label="Confirm Password",
         validators=[
             Optional(),
             Length(
                 min=8,
-                message='Password must be longer than 8 characters.',
+                message="Password must be longer than 8 characters.",
             ),
             Length(
                 max=20,
-                message='Password must be shorter than 20 characters.',
+                message="Password must be shorter than 20 characters.",
             ),
         ],
     )
-    submit = SubmitField('Update Information')
+    submit = SubmitField("Update Information")
+
 
 class PhotoForm(FlaskForm):
     photo = FileField(
@@ -148,46 +159,51 @@ class PhotoForm(FlaskForm):
         validators=[
             FileAllowed(photos),
             FileRequired(),
-        ]
+        ],
     )
-    submit = SubmitField('Upload Photo')
+    submit = SubmitField("Upload Photo")
+
 
 # Index Page
-@app.route('/')
+@app.route("/")
 def index():
     if current_user is None:
         return redirect("/signup")
     else:
         return redirect("/home")
 
+
 # Sign Up Page
-@app.route('/signup', methods=['GET', 'POST'])
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
     form = SignUpForm()
     if form.validate_on_submit():
         if form.password.data == form.confirm_password.data:
             user = Users.query.filter_by(email=form.email.data).first()
             if user is None:
-                password_hash = generate_password_hash(form.password.data, 'pbkdf2:sha256')
+                password_hash = generate_password_hash(
+                    form.password.data, "pbkdf2:sha256"
+                )
 
                 user = Users(
-                    username = form.username.data,
-                    email = form.email.data,
-                    password_hash = password_hash
+                    username=form.username.data,
+                    email=form.email.data,
+                    password_hash=password_hash,
                 )
 
                 db.session.add(user)
                 db.session.commit()
 
                 login_user(user)
-                return redirect('/home')
+                return redirect("/home")
         else:
             flash("Passwords do not match.")
 
-    return render_template('signup.html', form=form)
+    return render_template("signup.html", form=form)
+
 
 # Log In Page
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -196,34 +212,40 @@ def login():
             if user.verify_password(form.password.data):
                 login_user(user)
                 flash("Successfully logged in!")
-                return redirect('/home')
+                return redirect("/home")
             else:
                 flash("Password is incorrect. Please try again.")
         else:
             flash("User not found. Please try again.")
 
-    return render_template('login.html', form=form)
+    return render_template("login.html", form=form)
 
-@app.route('/logout')
+
+# Logout User
+@app.route("/logout")
 @login_required
 def logout():
     logout_user()
     flash("Successfully Logged Out.")
-    return redirect('/login')
+    return redirect("/login")
 
-@app.route('/home')
+
+@app.route("/home")
 @login_required
 def home():
-    photos = Photos.query.filter_by(user=current_user.id)
-    return render_template('home.html', photos=photos)
+    photos = []
+    for photo in Photos.query.filter_by(user=current_user.id):
+        photos.append(photo)
+    print(photos)
+    return render_template("home.html", photos=photos)
 
-@app.route('/update-user', methods=['GET', 'POST'])
+
+@app.route("/update-user", methods=["GET", "POST"])
 @login_required
 def update_user():
     form = UpdateAccountForm()
 
     if form.validate_on_submit():
-
         if form.username.data != current_user.username:
             if Users.query.filter_by(username=form.username.data).first():
                 flash("Username already exists.")
@@ -239,7 +261,7 @@ def update_user():
         if form.password.data:
             if form.password.data == form.confirm_password.data:
                 password_hash = generate_password_hash(
-                    form.password.data, 'pbkdf2:sha256'
+                    form.password.data, "pbkdf2:sha256"
                 )
 
                 current_user.password_hash = password_hash
@@ -249,12 +271,13 @@ def update_user():
         try:
             db.session.commit()
             flash("Account info updated.")
-            return render_template('update_user.html', form=form)
+            return render_template("update_user.html", form=form)
         except:
             flash("An error has occured. Please try again.")
-            return render_template('update_user.html', form=form)
+            return render_template("update_user.html", form=form)
 
-    return render_template('update_user.html', form=form)
+    return render_template("update_user.html", form=form)
+
 
 @app.route("/delete-user")
 @login_required
@@ -272,10 +295,11 @@ def delete_user():
         db.session.delete(user_to_delete)
         db.session.commit()
         flash("Account deleted successfully.")
-        return redirect('/')
+        return redirect("/")
     except:
         flash("An error has occured. Please try again.")
-        return redirect('/update-user')
+        return redirect("/update-user")
+
 
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
@@ -289,13 +313,15 @@ def upload():
             Image.open(photo).verify()
             photo.seek(0)
         except:
-            flash("The uploaded image is either invalid or contains corrupted data. Please try again with a different file.")
+            flash(
+                "The uploaded image is either invalid or contains corrupted data. Please try again with a different file."
+            )
 
             return redirect("/upload")
 
         if photo:
             folder_path = os.path.join(
-                app.config['UPLOADED_PHOTOS_DEST'],
+                app.config["UPLOADED_PHOTOS_DEST"],
                 str(current_user.id),
             )
             os.makedirs(folder_path, exist_ok=True)
@@ -314,10 +340,11 @@ def upload():
 
             flash(f"{photo.filename} uploaded successfully.")
 
-            return redirect("/upload")         
-        
+            return redirect("/upload")
+
     return render_template("upload.html", form=form)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     db_init(app)
     app.run(debug=True)
