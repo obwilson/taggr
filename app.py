@@ -1,8 +1,8 @@
-from flask import Flask, render_template, redirect, flash
+from flask import Flask, render_template, redirect, flash, request
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from flask_uploads import UploadSet, configure_uploads
-from wtforms import StringField, SubmitField, EmailField, PasswordField, FileField
+from wtforms import StringField, SubmitField, EmailField, PasswordField, FileField, SelectField
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
@@ -13,6 +13,7 @@ from flask_login import (
     logout_user,
     current_user,
 )
+from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
 from datetime import datetime
 import os
@@ -37,7 +38,6 @@ os.makedirs(app.config["UPLOADED_PHOTOS_DEST"], exist_ok=True)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -164,6 +164,32 @@ class PhotoForm(FlaskForm):
     submit = SubmitField("Upload Photo")
 
 
+class TagForm(FlaskForm):
+    tag_name = StringField(
+        label="Tag Name",
+        validators=[
+            DataRequired(),
+        ],
+    )
+    tag_colour = SelectField(
+        label="Tag Colour",
+        validators=[
+            DataRequired(),
+        ],
+        choices=[
+            ("danger", "Red"),
+            ("warning", "Yellow"),
+            ("success", "Green"),
+            ("primary", "Blue"),
+            ("info", "Light Blue"),
+            ("light", "White"),
+            ("secondary", "Grey"),
+            ("dark", "Black"),
+        ]
+    )
+    submit = SubmitField("Create")
+
+
 # Index Page
 @app.route("/")
 def index():
@@ -230,14 +256,37 @@ def logout():
     return redirect("/login")
 
 
-@app.route("/home")
+@app.route("/home", methods=["GET", "POST"])
 @login_required
 def home():
     photos = []
+
+    form = TagForm()
+
+    if form.validate_on_submit():
+        tag = [form.tag_name.data, form.tag_colour.data]
+        user_tags = current_user.tags
+
+        if user_tags:
+            if tag in user_tags:
+                flash("Tag name/colour already exists. Please try again.")
+            else:
+                user_tags.append(tag)
+                current_user.tags = user_tags
+                flag_modified(current_user, "tags")
+                db.session.commit()
+                flash("Tag created.")
+        else:
+            user_tags.append(tag)
+            current_user.tags = user_tags
+            flag_modified(current_user, "tags")
+            db.session.commit()
+            flash("Tag created.")
+
     for photo in Photos.query.filter_by(user=current_user.id):
         photos.append(photo)
-    print(photos)
-    return render_template("home.html", photos=photos)
+
+    return render_template("home.html", photos=photos, tags=current_user.tags, form=form)
 
 
 @app.route("/update-user", methods=["GET", "POST"])
@@ -326,7 +375,7 @@ def upload():
             )
             os.makedirs(folder_path, exist_ok=True)
 
-            file_name = secure_filename(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_{photo.filename}")
+            file_name = secure_filename(f"{datetime.now().strftime("%d-%m-%Y %H:%M:%S")}_{photo.filename}")
             file_path = os.path.join(
                 folder_path,
                 file_name,
@@ -343,6 +392,34 @@ def upload():
             return redirect("/upload")
 
     return render_template("upload.html", form=form)
+
+@app.route("/add_tag/<photo_id>")
+@login_required
+def add_tag(photo_id):
+    tag_name = request.args.get('tag_name')
+    tag_colour = request.args.get('tag_colour')
+
+    photo = Photos.query.get_or_404(photo_id)
+
+    tags = []
+
+    for tag in photo.tags:
+        tags.append(tag)
+
+    if photo:
+        if tag_name and tag_colour:
+            tag = [tag_name, tag_colour]
+            if tag in tags:
+                flash("Photo already has tag.")
+            else:
+                tags.append(tag)
+                photo.tags = tags
+
+            db.session.commit()
+        else:
+            flash("Information missing. Please try again.")
+
+    return redirect("/home")
 
 
 if __name__ == "__main__":
