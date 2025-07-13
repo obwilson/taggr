@@ -10,7 +10,7 @@
         {% for photo in photos %}
         <div class="col-sm-6 col-lg-3 mb-4">
             <div class="card" style="width: 18rem;">
-                <a data-bs-toggle="offcanvas" href="#sidebar" data-filepath="{{ photo.file_path }}" data-id="{{ photo.id }}" data-dateuploaded="{{ photo.date_added.strftime('%d/%m/%Y %I:%M %p') }}">
+                <a data-bs-toggle="offcanvas" href="#sidebar" data-filepath="{{ photo.file_path }}" data-id="{{ photo.id }}" data-dateuploaded="{{ photo.date_added.strftime('%d/%m/%Y %I:%M %p') }}" data-tags="{{ photo.tags }}">
                     <img src="{{ photo.file_path }}" class="card-img-top p-2">
                 </a>
             </div>
@@ -40,6 +40,12 @@
                         const sidebarImg = document.getElementById('sidebarImage');
                         const sidebarDateUploaded = document.getElementById('sidebarDateUploaded');
 
+                        const tagsAttr = this.getAttribute('data-tags')
+                        const tags = JSON.parse(tagsAttr.replaceAll("'", "\""));
+
+                        const sidebarTags = document.getElementById('sidebarTags');
+                        sidebarTags.innerHTML = '';
+
                         if (sidebarImg) {
                             sidebarImg.src = imgSrc;
                             sidebarImg.setAttribute("data-id", imgID); 
@@ -48,6 +54,14 @@
                         if (sidebarDateUploaded) {
                             sidebarDateUploaded.textContent = `Date Uploaded: ${dateUploaded}`;
                         }
+
+                        tags.forEach(([name, colour]) => {
+                            const btn = document.createElement('button');
+                            btn.className = `btn btn-${colour} text-center`;
+                            btn.type = 'button';
+                            btn.textContent = name;
+                            sidebarTags.appendChild(btn);
+                        });
                     });
                 });
 
@@ -85,6 +99,8 @@
         <p id="sidebarDateUploaded">Date Uploaded: </p>
         <h5 class="">Tags</h5>
         <div class="d-grid gap-2 shadow p-2 rounded-3">
+            <div id="sidebarTags" class="d-grid gap-2"></div>
+            <hr/>
             <div class="dropdown-center d-grid gap-2">
                 <button class="btn btn-secondary dropdown-toggle text-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                   Add Tag
