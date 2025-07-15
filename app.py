@@ -410,7 +410,7 @@ def add_tag(photo_id):
         if tag_name and tag_colour:
             tag = [tag_name, tag_colour]
             if tag in tags:
-                flash("Photo already has tag.")
+                flash(f"Photo is already tagged with {tag_name}")
             else:
                 tags.append(tag)
                 photo.tags = tags
@@ -418,6 +418,30 @@ def add_tag(photo_id):
             db.session.commit()
         else:
             flash("Information missing. Please try again.")
+
+    return redirect("/home")
+
+@app.route("/remove_tag/<photo_id>")
+def remove_tag(photo_id):
+    tag_name = request.args.get('tag_name')
+    tag_colour = request.args.get('tag_colour')
+
+    photo = Photos.query.get_or_404(photo_id)
+
+    tags = []
+
+    for tag in photo.tags:
+        tags.append(tag)
+
+    if photo:
+        tag = [tag_name, tag_colour]
+
+        if tag in tags:
+            tags.remove(tag)
+            print(f"Removed {tag}")
+
+            photo.tags = tags
+            db.session.commit()
 
     return redirect("/home")
 

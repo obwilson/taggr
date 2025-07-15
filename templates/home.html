@@ -43,6 +43,8 @@
                         const tagsAttr = this.getAttribute('data-tags')
                         const tags = JSON.parse(tagsAttr.replaceAll("'", "\""));
 
+                        const removeTagButton = document.getElementById('removeTagButton');
+
                         const sidebarTags = document.getElementById('sidebarTags');
                         sidebarTags.innerHTML = '';
 
@@ -54,13 +56,40 @@
                         if (sidebarDateUploaded) {
                             sidebarDateUploaded.textContent = `Date Uploaded: ${dateUploaded}`;
                         }
+                        
+                        if (tags.length === 0) {
+                            const emptyLabel = document.createElement('p');
+                            emptyLabel.className = `text-center`;
+                            emptyLabel.textContent = `Image has no tags.`;
 
+                            sidebarTags.appendChild(emptyLabel);
+                        }
+
+                        // Display image tags
                         tags.forEach(([name, colour]) => {
-                            const btn = document.createElement('button');
-                            btn.className = `btn btn-${colour} text-center`;
-                            btn.type = 'button';
-                            btn.textContent = name;
-                            sidebarTags.appendChild(btn);
+                            const container = document.createElement('div');
+                            container.className = `container text-bg-${colour} text-center p-2 rounded`;
+
+                            const label = document.createElement('h5');
+                            label.className = `text-bg-${colour} float-start`;
+                            label.textContent = name;
+
+                            const close = document.createElement('button');
+                            close.className = `btn btn-${colour} float-end`;
+                            close.textContent = `✕`
+                            close.type = `button`;
+                            close.setAttribute('data-bs-toggle', 'modal');
+                            close.setAttribute('data-bs-target', '#removeTagModal');
+
+                            close.addEventListener('click', () => {
+                                let href = removeTagButton.getAttribute('href').replace('__ID__', imgID).replace('__TAG_NAME__', name).replace('__TAG_COLOUR__', colour);
+
+                                removeTagButton.setAttribute('href', href);
+                            });
+
+                            sidebarTags.appendChild(container);
+                            container.appendChild(label);
+                            container.appendChild(close);
                         });
                     });
                 });
@@ -74,8 +103,6 @@
                         const imgID = sidebarImg ? sidebarImg.getAttribute('data-id') : null;
 
                         if (!imgID) return;
-
-                        console.log(imgID)
 
                         let href = this.getAttribute('href').replace('__ID__', imgID);
 
@@ -100,14 +127,14 @@
         <h5 class="">Tags</h5>
         <div class="d-grid gap-2 shadow p-2 rounded-3">
             <div id="sidebarTags" class="d-grid gap-2"></div>
-            <hr/>
+            <hr>
             <div class="dropdown-center d-grid gap-2">
                 <button class="btn btn-secondary dropdown-toggle text-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                   Add Tag
                 </button>
                 <ul class="dropdown-menu">
                     {% for tag in tags %}
-                        <li><a class="dropdown-item text-center bg-{{ tag[1] }}" href="{{ url_for('add_tag', photo_id='__ID__', tag_name=tag[0], tag_colour=tag[1]) }}" tag="{{ tag[0] }}">{{ tag[0] }}</a></li>
+                        <li><a class="dropdown-item text-center text-bg-{{ tag[1] }}" href="{{ url_for('add_tag', photo_id='__ID__', tag_name=tag[0], tag_colour=tag[1]) }}" tag="{{ tag[0] }}">{{ tag[0] }}</a></li>
                     {% endfor %}
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item text-center" data-bs-toggle="modal" data-bs-target="#tagModal">Create New Tag</button></li>
@@ -144,6 +171,25 @@
                     {{ form.submit(class="btn btn-primary") }}
                 </div>
             </form>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- Remove Tag Modal -->
+<div class="modal fade" id="removeTagModal" tabindex="-1" aria-labelledby="removeTagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="removeTagModalLabel">Remove Tag?</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>The tag will only be removed from this image.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <a type="button" class="btn btn-danger" id="removeTagButton" href="{{ url_for('remove_tag', photo_id='__ID__', tag_name='__TAG_NAME__', tag_colour='__TAG_COLOUR__') }}">Remove</a>
         </div>
       </div>
     </div>
