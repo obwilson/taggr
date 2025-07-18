@@ -2,9 +2,35 @@
 {% block title %} Home {% endblock%}
 
 {% block body %}
-{% if photos %}
+{% if has_photos %}
 <h1>Gallery</h1>
 <br>
+
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if img_filter == None %}
+            Filter: None
+        {% else %}
+            Filter: {{ img_filter[0] }}
+        {% endif %}
+    </button>
+    <ul class="dropdown-menu">
+        <li>
+            <form method="POST">
+                <button class="dropdown-item" name="filter_button" value="None">Clear Filter</button>
+            </form>
+        </li>
+        {% for tag in tags %}
+            <li>
+                <form method="POST">
+                    <button class="dropdown-item" name="filter_button" value="{{ tag }}">{{ tag[0] }}</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+<br>
+
 <div class="container px-4">
     <div class="row" data-masonry='{"percentPosition": true }'>
         {% for photo in photos %}

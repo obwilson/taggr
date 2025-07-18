@@ -17,6 +17,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
 from datetime import datetime
 import os
+import json
 
 app = Flask(__name__)
 
@@ -259,34 +260,58 @@ def logout():
 @app.route("/home", methods=["GET", "POST"])
 @login_required
 def home():
+    if Photos.query.filter_by(user=current_user.id):
+        has_photos = True
+    else:
+        has_photos = False
+
     photos = []
 
     form = TagForm()
 
-    if form.validate_on_submit():
-        tag = [form.tag_name.data, form.tag_colour.data]
+    img_filter = None
+
+    if request.method == "POST":
+        filter_button = request.form.get('filter_button')
+
+        if form.tag_name.data is not None:
+            tag = [form.tag_name.data, form.tag_colour.data]
+        else:
+            tag = None
         user_tags = current_user.tags
 
-        if user_tags:
-            if tag in user_tags:
-                flash("Tag name/colour already exists. Please try again.")
+        if filter_button == "None":
+            filter_button = None
+
+        if filter_button is not None:
+            img_filter = json.loads(filter_button.replace("'", "\""))    
+
+        if tag is not None:
+            if user_tags:
+                if tag in user_tags:
+                    flash("Tag name/colour already exists. Please try again.")
+                else:
+                    user_tags.append(tag)
+                    current_user.tags = user_tags
+                    flag_modified(current_user, "tags")
+                    db.session.commit()
+                    flash("Tag created.")
             else:
                 user_tags.append(tag)
                 current_user.tags = user_tags
                 flag_modified(current_user, "tags")
                 db.session.commit()
                 flash("Tag created.")
-        else:
-            user_tags.append(tag)
-            current_user.tags = user_tags
-            flag_modified(current_user, "tags")
-            db.session.commit()
-            flash("Tag created.")
 
     for photo in Photos.query.filter_by(user=current_user.id):
-        photos.append(photo)
+        if img_filter:
+            print(img_filter)
+            if img_filter in photo.tags:
+                photos.append(photo)
+        else:
+            photos.append(photo)
 
-    return render_template("home.html", photos=photos, tags=current_user.tags, form=form)
+    return render_template("home.html", photos=photos, tags=current_user.tags, form=form, img_filter=img_filter, has_photos=has_photos)
 
 
 @app.route("/update-user", methods=["GET", "POST"])
