@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, flash, request
+from flask import Flask, render_template, redirect, flash, request, session
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from flask_uploads import UploadSet, configure_uploads
@@ -170,6 +170,7 @@ class TagForm(FlaskForm):
         label="Tag Name",
         validators=[
             DataRequired(),
+            Length(min=1, max=20),
         ],
     )
     tag_colour = SelectField(
@@ -260,7 +261,7 @@ def logout():
 @app.route("/home", methods=["GET", "POST"])
 @login_required
 def home():
-    if Photos.query.filter_by(user=current_user.id):
+    if Photos.query.filter_by(user=current_user.id).count() > 0:
         has_photos = True
     else:
         has_photos = False
@@ -270,9 +271,11 @@ def home():
     form = TagForm()
 
     img_filter = None
+    sort_by = "Newest"
 
     if request.method == "POST":
         filter_button = request.form.get('filter_button')
+        sort_button = request.form.get('sort_button')
 
         if form.tag_name.data is not None:
             tag = [form.tag_name.data, form.tag_colour.data]
@@ -281,10 +284,21 @@ def home():
         user_tags = current_user.tags
 
         if filter_button == "None":
-            filter_button = None
+            session['filter_button'] = None
+        elif filter_button:
+            session['filter_button'] = filter_button
+        else:
+            filter_button = session.get('filter_button')
 
-        if filter_button is not None:
-            img_filter = json.loads(filter_button.replace("'", "\""))    
+        if sort_button:
+            session['sort_button'] = sort_button
+        else:
+            sort_button = session.get('sort_button')
+
+        if session.get('filter_button'):
+            img_filter = json.loads(session['filter_button'].replace("'", "\""))
+
+        sort_by = session.get('sort_button', "Newest")
 
         if tag is not None:
             if user_tags:
@@ -302,16 +316,25 @@ def home():
                 flag_modified(current_user, "tags")
                 db.session.commit()
                 flash("Tag created.")
+    else:
+        if session.get('filter_button'):
+            img_filter = json.loads(session['filter_button'].replace("'", "\""))
+        sort_by = session.get('sort_button', "Newest")
 
     for photo in Photos.query.filter_by(user=current_user.id):
         if img_filter:
-            print(img_filter)
             if img_filter in photo.tags:
                 photos.append(photo)
         else:
             photos.append(photo)
 
-    return render_template("home.html", photos=photos, tags=current_user.tags, form=form, img_filter=img_filter, has_photos=has_photos)
+    if sort_by == "Newest":
+        photos.sort(reverse=True, key=lambda x: x.date_added)
+    elif sort_by == "Oldest":
+        photos.sort(key=lambda x: x.date_added)
+
+    return render_template("home.html", photos=photos, tags=current_user.tags, form=form, img_filter=img_filter, sort_by=sort_by, has_photos=has_photos)
+
 
 
 @app.route("/update-user", methods=["GET", "POST"])
