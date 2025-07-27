@@ -178,7 +178,7 @@
                     {% for tag in tags %}
                         <li><a class="dropdown-item text-center text-bg-{{ tag[1] }}" href="{{ url_for('add_tag', photo_id='__ID__', tag_name=tag[0], tag_colour=tag[1]) }}" tag="{{ tag[0] }}">{{ tag[0] }}</a></li>
                     {% endfor %}
-                    <li><hr class="dropdown-divider"></li>
+                    {% if tags%} <li><hr class="dropdown-divider"></li> {% endif %}
                     <li><button class="dropdown-item text-center" data-bs-toggle="modal" data-bs-target="#tagModal">Create New Tag</button></li>
                 </ul>
             </div>
@@ -201,7 +201,10 @@
                 {{ form.tag_name.label(
                     class="form-label",
                 ) }}
-                {{ form.tag_name(class="form-control") }}
+                {{ form.tag_name(
+                    class="form-control",
+                    value=""
+                ) }}
                 <br/>
                 {{ form.tag_colour.label(
                     class="form-label"

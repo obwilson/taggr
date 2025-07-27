@@ -2,7 +2,14 @@ from flask import Flask, render_template, redirect, flash, request, session
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from flask_uploads import UploadSet, configure_uploads
-from wtforms import StringField, SubmitField, EmailField, PasswordField, FileField, SelectField
+from wtforms import (
+    StringField,
+    SubmitField,
+    EmailField,
+    PasswordField,
+    FileField,
+    SelectField,
+)
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
@@ -39,6 +46,7 @@ os.makedirs(app.config["UPLOADED_PHOTOS_DEST"], exist_ok=True)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -187,10 +195,9 @@ class TagForm(FlaskForm):
             ("light", "White"),
             ("secondary", "Grey"),
             ("dark", "Black"),
-        ]
+        ],
     )
     submit = SubmitField("Create")
-
 
 # Index Page
 @app.route("/")
@@ -274,8 +281,8 @@ def home():
     sort_by = "Newest"
 
     if request.method == "POST":
-        filter_button = request.form.get('filter_button')
-        sort_button = request.form.get('sort_button')
+        filter_button = request.form.get("filter_button")
+        sort_button = request.form.get("sort_button")
 
         if form.tag_name.data is not None:
             tag = [form.tag_name.data, form.tag_colour.data]
@@ -284,21 +291,21 @@ def home():
         user_tags = current_user.tags
 
         if filter_button == "None":
-            session['filter_button'] = None
+            session["filter_button"] = None
         elif filter_button:
-            session['filter_button'] = filter_button
+            session["filter_button"] = filter_button
         else:
-            filter_button = session.get('filter_button')
+            filter_button = session.get("filter_button")
 
         if sort_button:
-            session['sort_button'] = sort_button
+            session["sort_button"] = sort_button
         else:
-            sort_button = session.get('sort_button')
+            sort_button = session.get("sort_button")
 
-        if session.get('filter_button'):
-            img_filter = json.loads(session['filter_button'].replace("'", "\""))
+        if session.get("filter_button"):
+            img_filter = json.loads(session["filter_button"].replace("'", '"'))
 
-        sort_by = session.get('sort_button', "Newest")
+        sort_by = session.get("sort_button", "Newest")
 
         if tag is not None:
             if user_tags:
@@ -317,9 +324,9 @@ def home():
                 db.session.commit()
                 flash("Tag created.")
     else:
-        if session.get('filter_button'):
-            img_filter = json.loads(session['filter_button'].replace("'", "\""))
-        sort_by = session.get('sort_button', "Newest")
+        if session.get("filter_button"):
+            img_filter = json.loads(session["filter_button"].replace("'", '"'))
+        sort_by = session.get("sort_button", "Newest")
 
     for photo in Photos.query.filter_by(user=current_user.id):
         if img_filter:
@@ -333,8 +340,15 @@ def home():
     elif sort_by == "Oldest":
         photos.sort(key=lambda x: x.date_added)
 
-    return render_template("home.html", photos=photos, tags=current_user.tags, form=form, img_filter=img_filter, sort_by=sort_by, has_photos=has_photos)
-
+    return render_template(
+        "home.html",
+        photos=photos,
+        tags=current_user.tags,
+        form=form,
+        img_filter=img_filter,
+        sort_by=sort_by,
+        has_photos=has_photos,
+    )
 
 
 @app.route("/update-user", methods=["GET", "POST"])
@@ -441,11 +455,12 @@ def upload():
 
     return render_template("upload.html", form=form)
 
+
 @app.route("/add_tag/<photo_id>")
 @login_required
 def add_tag(photo_id):
-    tag_name = request.args.get('tag_name')
-    tag_colour = request.args.get('tag_colour')
+    tag_name = request.args.get("tag_name")
+    tag_colour = request.args.get("tag_colour")
 
     photo = Photos.query.get_or_404(photo_id)
 
@@ -469,10 +484,11 @@ def add_tag(photo_id):
 
     return redirect("/home")
 
+
 @app.route("/remove_tag/<photo_id>")
 def remove_tag(photo_id):
-    tag_name = request.args.get('tag_name')
-    tag_colour = request.args.get('tag_colour')
+    tag_name = request.args.get("tag_name")
+    tag_colour = request.args.get("tag_colour")
 
     photo = Photos.query.get_or_404(photo_id)
 
@@ -493,6 +509,46 @@ def remove_tag(photo_id):
 
     return redirect("/home")
 
+
+@app.route("/manage_tags", methods=["GET", "POST"])
+@login_required
+def manage_tags():
+    form = TagForm()
+
+    if form.validate_on_submit():
+        tag = [form.tag_name.data, form.tag_colour.data]
+        original_tag = json.loads(request.form.get("original_tag").replace("'", '"'))
+
+        try:
+            tag_index = current_user.tags.index(original_tag)
+        except:
+            tag_index = None
+
+        if tag_index is not None:
+            if tag in current_user.tags:
+                flash("Tag name/colour already exists. Please try again.")
+            else:
+                current_user.tags[tag_index] = tag
+                flag_modified(current_user, "tags")
+                flash("Successfully updated tag.")
+
+                for photo in db.session.query(Photos):
+                    photo_tags = []
+
+                    for existing_tag in photo.tags:
+                        photo_tags.append(existing_tag)
+
+                    print(photo_tags)
+
+                    if original_tag in photo_tags:
+                        photo_tags[photo_tags.index(original_tag)] = tag
+                        photo.tags = photo_tags
+
+                        flag_modified(photo, "tags")
+
+                db.session.commit()
+
+    return render_template("manage_tags.html", tags=current_user.tags, form=form)
 
 if __name__ == "__main__":
     db_init(app)
