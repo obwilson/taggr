@@ -2,36 +2,36 @@
 {% block title %} Sign Up {% endblock %}
 
 {% block body %}
-    <h1 class="d-flex justify-content-center">Sign Up</h1>
-    <br/>
-    <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-        <form method="POST">
-            {{ form.hidden_tag() }}
+<h1 class="d-flex justify-content-center">Sign Up</h1>
+<br />
+<div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+    <form method="POST">
+        {{ form.hidden_tag() }}
 
-            {{ form.username.label(
-                class="form-label",
-            ) }}
-            {{ form.username(class="form-control") }}
-            <br/>
-            {{ form.email.label(
-                class="form-label"
-            ) }}
-            {{ form.email(class="form-control") }}
-            <br/>
-            {{ form.password.label(
-                class="form-label"
-            ) }}
-            {{ form.password(class="form-control") }}
-            <div class="form-text">
-                Your password must be 8-20 characters long.
-            </div>
-            <br/>
-            {{ form.confirm_password.label(
-                class="form-label"
-            ) }}
-            {{ form.confirm_password(class="form-control") }}
-            <br/>
-            {{ form.submit(class="btn btn-secondary") }}
-        </form>
-    </div>
+        {{ form.username.label(
+        class="form-label",
+        ) }}
+        {{ form.username(class="form-control") }}
+        <br />
+        {{ form.email.label(
+        class="form-label"
+        ) }}
+        {{ form.email(class="form-control") }}
+        <br />
+        {{ form.password.label(
+        class="form-label"
+        ) }}
+        {{ form.password(class="form-control") }}
+        <div class="form-text">
+            Your password must be 8-20 characters long.
+        </div>
+        <br />
+        {{ form.confirm_password.label(
+        class="form-label"
+        ) }}
+        {{ form.confirm_password(class="form-control") }}
+        <br />
+        {{ form.submit(class="btn btn-secondary") }}
+    </form>
+</div>
 {% endblock %}

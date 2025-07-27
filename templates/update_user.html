@@ -2,49 +2,58 @@
 {% block title %} Edit Account {% endblock%}
 
 {% block body %}
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        
-        <h4>Username</h4>
-        {{ form.username(class="form-control form-control-lg col-sm", value=current_user.username) }}
-        <br/>
-        {{ form.email(class="form-control form-control-lg col-sm", value=current_user.email) }}
-        <br/><br/>
-        <h3>Change Password</h3>
-        {{ form.password.label(
-            class="form-label"
-        ) }}
-        {{ form.password(class="form-control") }}
-        <div class="form-text">
-            Your password must be 8-20 characters long.
-        </div>
-        <br/>
-        {{ form.confirm_password.label(
-            class="form-label"
-        ) }}
-        {{ form.confirm_password(class="form-control") }}
-        <br/>
-        <div class="d-flex justify-content-between">
-            {{ form.submit(class="btn btn-secondary p-2") }}
-            <button type="button" class="btn btn-danger p-2" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Account</button>
-        </div>
-    </form> 
+<form method="POST">
+    {{ form.hidden_tag() }}
 
-    <div class="modal fade" id="deleteModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="deleteModal" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="deleteLabel">Delete account?</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+    <h4>Username</h4>
+    {{ form.username(class="form-control form-control-lg col-sm",
+    value=current_user.username) }}
+    <br />
+    {{ form.email(class="form-control form-control-lg col-sm",
+    value=current_user.email) }}
+    <br /><br />
+    <h3>Change Password</h3>
+    {{ form.password.label(
+    class="form-label"
+    ) }}
+    {{ form.password(class="form-control") }}
+    <div class="form-text">
+        Your password must be 8-20 characters long.
+    </div>
+    <br />
+    {{ form.confirm_password.label(
+    class="form-label"
+    ) }}
+    {{ form.confirm_password(class="form-control") }}
+    <br />
+    <div class="d-flex justify-content-between">
+        {{ form.submit(class="btn btn-secondary p-2") }}
+        <button type="button" class="btn btn-danger p-2" data-bs-toggle="modal"
+            data-bs-target="#deleteModal">Delete Account</button>
+    </div>
+</form>
+
+<div class="modal fade" id="deleteModal" data-bs-backdrop="static" tabindex="-1"
+    aria-labelledby="deleteModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="deleteLabel">Delete
+                    account?</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
             <div class="modal-body">
-                This action cannot be undone. All uploaded photos and account info will be deleted forever.
+                This action cannot be undone. All uploaded photos and account
+                info will be deleted forever.
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <a type="button" class="btn btn-danger" href="{{ url_for('delete_user') }}">Delete</a>
+                <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cancel</button>
+                <a type="button" class="btn btn-danger"
+                    href="{{ url_for('delete_user') }}">Delete</a>
             </div>
-          </div>
         </div>
     </div>
+</div>
 {% endblock %}
