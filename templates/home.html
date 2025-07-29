@@ -193,12 +193,16 @@
                             href="{{ url_for('add_tag', photo_id='__ID__', tag_name=tag[0], tag_colour=tag[1]) }}"
                             tag="{{ tag[0] }}">{{ tag[0] }}</a></li>
                     {% endfor %}
-                    {% if tags%} <li><hr class="dropdown-divider"></li> {% endif
-                    %}
-                    <li><button class="dropdown-item text-center"
+                    {% if tags %}
+                    <li><hr class="dropdown-divider"></li> 
+                    {% endif %}
+                    <li>
+                        <button class="dropdown-item text-center"
                             data-bs-toggle="modal"
-                            data-bs-target="#tagModal">Create New
-                            Tag</button></li>
+                            data-bs-target="#tagModal">
+                            Create New Tag
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>

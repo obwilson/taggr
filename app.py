@@ -486,6 +486,7 @@ def add_tag(photo_id):
 
 
 @app.route("/remove_tag/<photo_id>")
+@login_required
 def remove_tag(photo_id):
     tag_name = request.args.get("tag_name")
     tag_colour = request.args.get("tag_colour")
@@ -508,6 +509,37 @@ def remove_tag(photo_id):
             db.session.commit()
 
     return redirect("/home")
+
+@app.route("/delete_tag/<tag>")
+@login_required
+def delete_tag(tag):
+    tag = json.loads(tag.replace("'", '"'))
+
+    user_tags = current_user.tags
+
+    if tag in user_tags:
+        for photo in Photos.query.filter_by(user=current_user.id):
+            photo_tags = []
+
+            for existing_tag in photo.tags:
+                photo_tags.append(existing_tag)
+
+            if tag in photo_tags:
+                photo_tags.pop(photo_tags.index(tag))
+                photo.tags = photo_tags
+
+                flag_modified(photo, "tags")
+        
+        user_tags.pop(user_tags.index(tag))
+        current_user.tags = user_tags
+        flag_modified(current_user, "tags")
+        
+        db.session.commit()
+        flash("Tag successfully deleted.")
+    else:
+        flash("Tag not found. Please try again.")
+
+    return redirect("/manage_tags")
 
 
 @app.route("/manage_tags", methods=["GET", "POST"])
@@ -532,13 +564,11 @@ def manage_tags():
                 flag_modified(current_user, "tags")
                 flash("Successfully updated tag.")
 
-                for photo in db.session.query(Photos):
+                for photo in Photos.query.filter_by(user=current_user.id):
                     photo_tags = []
 
                     for existing_tag in photo.tags:
                         photo_tags.append(existing_tag)
-
-                    print(photo_tags)
 
                     if original_tag in photo_tags:
                         photo_tags[photo_tags.index(original_tag)] = tag
