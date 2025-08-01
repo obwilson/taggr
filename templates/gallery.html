@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block title %} Gallery {% endblock%}
+
+{% block body %}
+{% if has_photos %}
+<h1>Gallery</h1>
+<br>
+
+<div class="d-flex gap-2">
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            {% if img_filter == None %}
+            Filter: None
+            {% else %}
+            Filter: {{ img_filter[0] }}
+            {% endif %}
+        </button>
+        <ul class="dropdown-menu">
+            <li>
+                <form method="POST">
+                    <button class="dropdown-item" name="filter_button"
+                        value="None">None</button>
+                    {% for tag in tags %}
+                    <button class="dropdown-item" name="filter_button"
+                        value="{{ tag }}">{{ tag[0] }}</button>
+                    {% endfor %}
+                </form>
+            </li>
+        </ul>
+    </div>
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            Sort By: {{ sort_by }}
+        </button>
+        <ul class="dropdown-menu">
+            <li>
+                <form method="POST">
+                    <button class="dropdown-item" name="sort_button"
+                        value="Newest">Newest</button>
+                    <button class="dropdown-item" name="sort_button"
+                        value="Oldest">Oldest</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</div>
+<br>
+{% endif %}
+
+{% if photos %}
+<div class="container px-4">
+    <div class="row" data-masonry='{"percentPosition": true }'>
+        {% for photo in photos %}
+        <div class="col-sm-6 col-lg-3 mb-4">
+            <div class="card" style="width: 18rem;">
+                <a data-bs-toggle="offcanvas" href="#sidebar"
+                    data-filepath="{{ photo.file_path }}"
+                    data-id="{{ photo.id }}"
+                    data-dateuploaded="{{ photo.date_added.strftime('%d/%m/%Y %I:%M %p') }}"
+                    data-tags="{{ photo.tags }}">
+                    <img src="{{ photo.file_path }}" class="card-img-top p-2">
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+        <!-- Javascript -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Reload grid after loading all images.
+                var grid = document.querySelector('.row[data-masonry]');
+                var msnry;
+            
+                imagesLoaded(grid, function () {
+                    msnry = new Masonry(grid, {
+                        itemSelector: '.col-sm-6',
+                        percentPosition: true
+                    });
+                });
+            
+                // Offcanvas image updating
+                document.querySelectorAll('[data-bs-toggle="offcanvas"]').forEach(function (link) {
+                    link.addEventListener('click', function () {
+                        const imgSrc = this.getAttribute('data-filepath');
+                        const dateUploaded = this.getAttribute('data-dateuploaded');
+                        const imgID = this.getAttribute('data-id');
+
+                        const sidebarImg = document.getElementById('sidebarImage');
+                        const sidebarDateUploaded = document.getElementById('sidebarDateUploaded');
+
+                        const tagsAttr = this.getAttribute('data-tags')
+                        const tags = JSON.parse(tagsAttr.replaceAll("'", "\""));
+
+                        const removeTagButton = document.getElementById('removeTagButton');
+
+                        const selectedPhoto = document.getElementById('selectedPhoto');
+                        selectedPhoto.setAttribute('value', imgID)
+
+                        const sidebarTags = document.getElementById('sidebarTags');
+                        sidebarTags.innerHTML = '';
+
+                        if (sidebarImg) {
+                            sidebarImg.src = imgSrc;
+                            sidebarImg.setAttribute("data-id", imgID); 
+                        }
+
+                        if (sidebarDateUploaded) {
+                            sidebarDateUploaded.textContent = `Date Uploaded: ${dateUploaded}`;
+                        }
+                        
+                        if (tags.length === 0) {
+                            const emptyLabel = document.createElement('p');
+                            emptyLabel.className = `text-center`;
+                            emptyLabel.textContent = `Image has no tags.`;
+
+                            sidebarTags.appendChild(emptyLabel);
+                        }
+
+                        // Display image tags
+                        tags.forEach(([name, colour]) => {
+                            const container = document.createElement('div');
+                            container.className = `container text-bg-${colour} text-center p-2 rounded`;
+
+                            const label = document.createElement('h5');
+                            label.className = `text-bg-${colour} float-start`;
+                            label.textContent = name;
+
+                            const close = document.createElement('button');
+                            close.className = `btn btn-${colour} float-end`;
+                            close.textContent = `✕`
+                            close.type = `button`;
+                            close.setAttribute('data-bs-toggle', 'modal');
+                            close.setAttribute('data-bs-target', '#removeTagModal');
+
+                            close.addEventListener('click', () => {
+                                let href = removeTagButton.getAttribute('href').replace('__ID__', imgID).replace('__TAG_NAME__', name).replace('__TAG_COLOUR__', colour);
+
+                                removeTagButton.setAttribute('href', href);
+                            });
+
+                            sidebarTags.appendChild(container);
+                            container.appendChild(label);
+                            container.appendChild(close);
+                        });
+                    });
+                });
+
+                // Pass photo into tag dropdown.
+                document.querySelectorAll('.dropdown-item[tag]').forEach(function (tagItem) {
+                    tagItem.addEventListener('click', function (e) {
+                        e.preventDefault();
+
+                        const sidebarImg = document.getElementById('sidebarImage');
+                        const imgID = sidebarImg ? sidebarImg.getAttribute('data-id') : null;
+
+                        if (!imgID) return;
+
+                        let href = this.getAttribute('href').replace('__ID__', imgID);
+
+                        window.location.href = href;  // Redirect to final URL
+                    });
+                });
+            });
+        </script>
+    </div>
+</div>
+{% elif not photos and has_photos %}
+<p>No photos match the filter.</p>
+{% endif %}
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar"
+    aria-labelledby="sidebarLabel">
+    <div class="offcanvas-header">
+        <h3 class="offcanvas-title" id="sidebarLabel">Manage Photo</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+            aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <img id="sidebarImage" class="card-img p-2" data-id>
+        <p id="sidebarDateUploaded">Date Uploaded: </p>
+        <h5 class>Tags</h5>
+        <div class="d-grid gap-2 shadow p-2 rounded-3">
+            <div id="sidebarTags" class="d-grid gap-2"></div>
+            <hr>
+            <div class="dropdown-center d-grid gap-2">
+                <button class="btn btn-secondary dropdown-toggle text-center"
+                    type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    Add Tag
+                </button>
+                <ul class="dropdown-menu">
+                    {% for tag in tags %}
+                    <li><a
+                            class="dropdown-item text-center text-bg-{{ tag[1] }}"
+                            href="{{ url_for('add_tag', photo_id='__ID__', tag_name=tag[0], tag_colour=tag[1]) }}"
+                            tag="{{ tag[0] }}">{{ tag[0] }}</a></li>
+                    {% endfor %}
+                    {% if tags %}
+                    <li><hr class="dropdown-divider"></li> 
+                    {% endif %}
+                    <li>
+                        <button class="dropdown-item text-center"
+                            data-bs-toggle="modal"
+                            data-bs-target="#tagModal">
+                            Create New Tag
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tag Modal -->
+<div class="modal fade" id="tagModal" tabindex="-1"
+    aria-labelledby="tagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="tagModalLabel">Create New
+                    Tag</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <input type="hidden" id="selectedPhoto" name="selected_photo" value="__SELECTED_PHOTO__">
+
+                    {{ form.tag_name.label(
+                    class="form-label",
+                    ) }}
+                    {{ form.tag_name(
+                    class="form-control",
+                    value=""
+                    ) }}
+                    <br />
+                    {{ form.tag_colour.label(
+                    class="form-label"
+                    ) }}
+                    {{ form.tag_colour(class="form-select") }}
+                    <br />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                            data-bs-dismiss="modal">Close</button>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Tag Modal -->
+<div class="modal fade" id="removeTagModal" tabindex="-1"
+    aria-labelledby="removeTagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="removeTagModalLabel">Remove
+                    Tag?</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>The tag will only be removed from this image.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Close</button>
+                <a type="button" class="btn btn-danger" id="removeTagButton"
+                    href="{{ url_for('remove_tag', photo_id='__ID__', tag_name='__TAG_NAME__', tag_colour='__TAG_COLOUR__') }}">Remove</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not has_photos %}
+<h1>No Photos Uploaded.</h1>
+<p>Go to the upload tab to get started!</p>
+{% endif %}
+{% endblock %}
