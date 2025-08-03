@@ -2,5 +2,7 @@
 {% block title %} Home {% endblock%}
 
 {% block body %}
-<p>Home</p>
+<h1>Welcome, {{ username }}!</h1>
+<br/>
+<p>Taggr is an online gallery to help upload, sort through, and filter photos. After uploading photos in the <a href="{{ url_for('upload') }}">Upload</a> tab, you can view them in your Gallery.</p>
 {% endblock %}

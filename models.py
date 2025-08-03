@@ -1,5 +1,5 @@
 from db import db
-from datetime import datetime
+from datetime import datetime, UTC
 from werkzeug.security import check_password_hash
 from flask_login import UserMixin
 
@@ -9,7 +9,7 @@ class Users(db.Model, UserMixin):
     username = db.Column(db.String(12), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
     tags = db.Column(db.JSON, default=[])
-    date_added = db.Column(db.DateTime, default=datetime.now())
+    date_added = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 
     # Password hashing
     password_hash = db.Column(db.String(256))
@@ -23,4 +23,4 @@ class Photos(db.Model):
     user = db.Column(db.Integer, nullable=False)
     file_path = db.Column(db.String(256), nullable=False)
     tags = db.Column(db.JSON, default=[])
-    date_added = db.Column(db.DateTime, default=datetime.now())
+    date_added = db.Column(db.DateTime, default=lambda: datetime.now(UTC))

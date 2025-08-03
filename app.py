@@ -1,3 +1,10 @@
+"""Taggr: A web app for uploading, tagging, and sorting photos.
+
+The program includes a simple to use tag system that the
+user can use to filter by in order to find specific categories of photo. The app
+integrates with multiple HTML documents for rendering the user interface.
+"""
+
 from flask import Flask, render_template, redirect, flash, request, session
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -298,7 +305,7 @@ def logout():
 @app.route("/home")
 @login_required
 def home():
-    return render_template("home.html")
+    return render_template("home.html", username=current_user.username)
 
 # Gallery Page
 @app.route("/gallery", methods=["GET", "POST"])
@@ -377,17 +384,29 @@ def gallery():
             img_filter = json.loads(session["filter_button"].replace("'", '"'))
         sort_by = session.get("sort_button", "Newest")
 
-    for photo in Photos.query.filter_by(user=current_user.id):
-        if img_filter:
-            if img_filter in photo.tags:
-                photos.append(photo)
-        else:
-            photos.append(photo)
-
     if sort_by == "Newest":
-        photos.sort(reverse=True, key=lambda x: x.date_added)
+        for photo in Photos.query.filter_by(
+            user=current_user.id
+        ).order_by(Photos.date_added.desc()):
+            if img_filter:
+                if img_filter in photo.tags:
+                    photos.append(photo)
+            else:
+                photos.append(photo)
     elif sort_by == "Oldest":
-        photos.sort(key=lambda x: x.date_added)
+        for photo in Photos.query.filter_by(
+            user=current_user.id
+        ).order_by(Photos.date_added.asc()):
+            if img_filter:
+                if img_filter in photo.tags:
+                    photos.append(photo)
+            else:
+                photos.append(photo)
+
+    
+        # photos.sort(reverse=True, key=lambda x: x.date_added)
+    
+        # photos.sort(key=lambda x: x.date_added)
 
     return render_template(
         "gallery.html",
@@ -409,12 +428,14 @@ def update_user():
         if form.username.data != current_user.username:
             if Users.query.filter_by(username=form.username.data).first():
                 flash("Username already exists.")
+                return render_template("update_user.html", form=form)
             else:
                 current_user.username = form.username.data
 
         if form.email.data != current_user.email:
             if Users.query.filter_by(email=form.email.data).first():
                 flash("Email already exists.")
+                return render_template("update_user.html", form=form)
             else:
                 current_user.email = form.email.data
 
@@ -427,6 +448,7 @@ def update_user():
                 current_user.password_hash = password_hash
             else:
                 flash("Passwords do not match.")
+                return render_template("update_user.html", form=form)
 
         try:
             db.session.commit()

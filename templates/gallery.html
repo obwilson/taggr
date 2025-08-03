@@ -279,6 +279,6 @@
 
 {% if not has_photos %}
 <h1>No Photos Uploaded.</h1>
-<p>Go to the upload tab to get started!</p>
+<p>Go to the <a href="{{ url_for('upload') }}">Upload</a> tab to get started!</p>
 {% endif %}
 {% endblock %}

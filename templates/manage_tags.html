@@ -5,6 +5,7 @@
 <h1>Manage Tags</h1>
 <br>
 {% if tags %}
+<p>This tab is only for editing and deleting existing tags. To add a tag to a photo, head to the <a href="{{ url_for('gallery') }}">Gallery</a> tab and click on an uploaded photo.</p>
 <div class="d-grid gap-2 shadow p-2 rounded-3 row">
     {% for tag in tags %}
     {% set index = loop.index0 %}
@@ -59,6 +60,6 @@
     {% endfor %}
 </div>
 {% else %}
-<p>You have no tags! You can create one by clicking on an uploaded image.</p>
+<p>You have no tags! To add a tag to a photo, head to the <a href="{{ url_for('gallery') }}">Gallery</a> tab and click on an uploaded photo.</p>
 {% endif %}
 {% endblock%}
