@@ -4,7 +4,7 @@
 {% block body %}
 {% if has_photos %}
 <h1>Gallery</h1>
-<p>You can click on a photo to add or remove tags. To edit existing tags go to the <a href="{{ url_for('manage_tags') }}">Tags</a> tab.</p>
+<p>You can click on an uploaded photo to add, remove, or create new tags. To edit existing tags go to the <a href="{{ url_for('manage_tags') }}">Tags</a> tab.</p>
 <br>
 <div class="d-flex gap-2">
     <div class="dropdown">
@@ -93,6 +93,8 @@
                         const tags = JSON.parse(tagsAttr.replaceAll("'", "\""));
 
                         const removeTagButton = document.getElementById('removeTagButton');
+                        const deletePhotoButton = document.getElementById('deletePhotoButton')
+                        deletePhotoButton.setAttribute('href', deletePhotoButton.getAttribute('href').replace('__ID__', imgID))
 
                         const selectedPhoto = document.getElementById('selectedPhoto');
                         selectedPhoto.setAttribute('value', imgID)
@@ -176,7 +178,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
             aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
+    <div class="offcanvas-body d-grid gap-2">
         <img id="sidebarImage" class="card-img p-2" data-id>
         <p id="sidebarDateUploaded">Date Uploaded: </p>
         <h5 class>Tags</h5>
@@ -209,6 +211,12 @@
                 </ul>
             </div>
         </div>
+        <br/>
+        <button class="btn btn-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#deletePhotoModal">
+            Delete Photo
+        </button>
     </div>
 </div>
 
@@ -272,6 +280,31 @@
                     data-bs-dismiss="modal">Close</button>
                 <a type="button" class="btn btn-danger" id="removeTagButton"
                     href="{{ url_for('remove_tag', photo_id='__ID__', tag_name='__TAG_NAME__', tag_colour='__TAG_COLOUR__') }}">Remove</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Photo Modal -->
+<div class="modal fade" id="deletePhotoModal" tabindex="-1"
+    aria-labelledby="deletePhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="deletePhotoModalLabel">
+                    Delete Photo?
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cancel</button>
+                <a type="button" class="btn btn-danger" id="deletePhotoButton"
+                    href="{{ url_for('delete_photo', photo_id='__ID__') }}">Delete</a>
             </div>
         </div>
     </div>

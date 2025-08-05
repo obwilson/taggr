@@ -209,6 +209,7 @@ class CreateTagForm(FlaskForm):
     )
     submit = SubmitField("Create")
 
+
 # Edit Tag Form
 class EditTagForm(FlaskForm):
     tag_name = StringField(
@@ -235,6 +236,7 @@ class EditTagForm(FlaskForm):
         ],
     )
     submit = SubmitField("Save")
+
 
 # Index Page
 @app.route("/")
@@ -301,11 +303,13 @@ def logout():
     flash("Successfully Logged Out.")
     return redirect("/login")
 
+
 # Home Page
 @app.route("/home")
 @login_required
 def home():
     return render_template("home.html", username=current_user.username)
+
 
 # Gallery Page
 @app.route("/gallery", methods=["GET", "POST"])
@@ -376,27 +380,26 @@ def gallery():
         sort_by = session.get("sort_button", "Newest")
 
     if sort_by == "Newest":
-        for photo in Photos.query.filter_by(
-            user=current_user.id
-        ).order_by(Photos.date_added.desc()):
+        for photo in Photos.query.filter_by(user=current_user.id).order_by(
+            Photos.date_added.desc()
+        ):
             if img_filter:
                 if img_filter in photo.tags:
                     photos.append(photo)
             else:
                 photos.append(photo)
     elif sort_by == "Oldest":
-        for photo in Photos.query.filter_by(
-            user=current_user.id
-        ).order_by(Photos.date_added.asc()):
+        for photo in Photos.query.filter_by(user=current_user.id).order_by(
+            Photos.date_added.asc()
+        ):
             if img_filter:
                 if img_filter in photo.tags:
                     photos.append(photo)
             else:
                 photos.append(photo)
 
-    
         # photos.sort(reverse=True, key=lambda x: x.date_added)
-    
+
         # photos.sort(key=lambda x: x.date_added)
 
     return render_template(
@@ -408,6 +411,7 @@ def gallery():
         sort_by=sort_by,
         has_photos=has_photos,
     )
+
 
 # Update User
 @app.route("/update-user", methods=["GET", "POST"])
@@ -451,6 +455,7 @@ def update_user():
 
     return render_template("update_user.html", form=form)
 
+
 # Delete User
 @app.route("/delete-user")
 @login_required
@@ -473,6 +478,7 @@ def delete_user():
         flash("An error has occured. Please try again.")
         return redirect("/update-user")
 
+
 # Upload Photo
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
@@ -487,7 +493,8 @@ def upload():
             photo.seek(0)
         except:
             flash(
-                "The uploaded image is either invalid or contains corrupted data. Please try again with a different file."
+                """The uploaded image is either invalid or contains corrupted
+                data. Please try again with a different file."""
             )
 
             return redirect("/upload")
@@ -499,7 +506,10 @@ def upload():
             )
             os.makedirs(folder_path, exist_ok=True)
 
-            file_name = secure_filename(f"{datetime.now().strftime("%d-%m-%Y %H:%M:%S")}_{photo.filename}")
+            file_name = secure_filename(
+                f"{ datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+                }_{photo.filename}"
+            )
             file_path = os.path.join(
                 folder_path,
                 file_name,
@@ -516,6 +526,7 @@ def upload():
             return redirect("/upload")
 
     return render_template("upload.html", form=form)
+
 
 # Add tag to specified photo
 @app.route("/add_tag/<photo_id>")
@@ -546,6 +557,7 @@ def add_tag(photo_id):
 
     return redirect("/gallery")
 
+
 # Remove tag from specific photo
 @app.route("/remove_tag/<photo_id>")
 @login_required
@@ -572,6 +584,7 @@ def remove_tag(photo_id):
 
     return redirect("/gallery")
 
+
 # Delete tag
 @app.route("/delete_tag/<tag>")
 @login_required
@@ -592,17 +605,34 @@ def delete_tag(tag):
                 photo.tags = photo_tags
 
                 flag_modified(photo, "tags")
-        
+
         user_tags.pop(user_tags.index(tag))
         current_user.tags = user_tags
         flag_modified(current_user, "tags")
-        
+
         db.session.commit()
         flash("Tag successfully deleted.")
     else:
         flash("Tag not found. Please try again.")
 
     return redirect("/manage_tags")
+
+
+# Delete Photo
+@app.route("/delete_photo/<photo_id>")
+@login_required
+def delete_photo(photo_id):
+    photo = Photos.query.get_or_404(photo_id)
+
+    try:
+        db.session.delete(photo)
+        db.session.commit()
+        flash("Successfully deleted photo.")
+    except:
+        flash("An error has occurred, please try again.")
+
+    return redirect("/gallery")
+
 
 # Manage tags Page
 @app.route("/manage_tags", methods=["GET", "POST"])
@@ -612,7 +642,9 @@ def manage_tags():
 
     if form.validate_on_submit():
         tag = [form.tag_name.data, form.tag_colour.data]
-        original_tag = json.loads(request.form.get("original_tag").replace("'", '"'))
+        original_tag = json.loads(
+            request.form.get("original_tag").replace("'", '"')
+        )
 
         try:
             tag_index = current_user.tags.index(original_tag)
@@ -641,7 +673,12 @@ def manage_tags():
 
                 db.session.commit()
 
-    return render_template("manage_tags.html", tags=current_user.tags, form=form)
+    return render_template(
+        "manage_tags.html",
+        tags=current_user.tags,
+        form=form,
+    )
+
 
 if __name__ == "__main__":
     db_init(app)
