@@ -4,8 +4,8 @@
 {% block body %}
 {% if has_photos %}
 <h1>Gallery</h1>
+<p>You can click on a photo to add or remove tags. To edit existing tags go to the <a href="{{ url_for('manage_tags') }}">Tags</a> tab.</p>
 <br>
-
 <div class="d-flex gap-2">
     <div class="dropdown">
         <button class="btn btn-secondary dropdown-toggle" type="button"
@@ -227,7 +227,7 @@
                 <form method="POST">
                     {{ form.hidden_tag() }}
 
-                    <input type="hidden" id="selectedPhoto" name="selected_photo" value="__SELECTED_PHOTO__">
+                    <input type="hidden" id="selectedPhoto" name="selected_photo">
 
                     {{ form.tag_name.label(
                     class="form-label",

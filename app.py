@@ -351,32 +351,23 @@ def gallery():
         sort_by = session.get("sort_button", "Newest")
 
         if tag is not None:
-            if user_tags:
-                if tag in user_tags:
-                    flash("Tag name/colour already exists. Please try again.")
-                else:
-                    selected_photo = request.form.get("selected_photo")
-                    user_tags.append(tag)
-                    current_user.tags = user_tags
-                    flag_modified(current_user, "tags")
-
-                    photo = Photos.query.filter_by(id=selected_photo).first()
-                    photo_tags = []
-
-                    for photo_tag in photo.tags:
-                        photo_tags.append(photo_tag)
-
-                    photo_tags.append(tag)
-
-                    photo.tags = photo_tags
-                    flag_modified(photo, "tags")
-
-                    db.session.commit()
-                    flash("Tag created.")
+            if user_tags and tag in user_tags:
+                flash("Tag name/colour already exists. Please try again.")
             else:
+                selected_photo = request.form.get("selected_photo")
                 user_tags.append(tag)
                 current_user.tags = user_tags
                 flag_modified(current_user, "tags")
+
+                photo = Photos.query.filter_by(id=selected_photo).first()
+                photo_tags = [tag]
+
+                for photo_tag in photo.tags:
+                    photo_tags.append(photo_tag)
+
+                photo.tags = photo_tags
+                flag_modified(photo, "tags")
+
                 db.session.commit()
                 flash("Tag created.")
     else:
