@@ -49,18 +49,19 @@ configure_uploads(app, photos)
 
 os.makedirs(app.config["UPLOADED_PHOTOS_DEST"], exist_ok=True)
 
-# User Login
+## User Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
 
+## Load logged in user from database
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
 
-# Sign Up Form Class
+## Sign Up Form Class
 class SignUpForm(FlaskForm):
     username = StringField(
         label="Username",
@@ -106,7 +107,7 @@ class SignUpForm(FlaskForm):
     submit = SubmitField("Sign Up")
 
 
-# Log In Form Class
+## Log In Form Class
 class LoginForm(FlaskForm):
     username = StringField(
         label="Username",
@@ -124,7 +125,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Log In")
 
 
-# Update Account Form
+## Update Account Form
 class UpdateAccountForm(FlaskForm):
     username = StringField(
         label="Username",
@@ -170,7 +171,7 @@ class UpdateAccountForm(FlaskForm):
     submit = SubmitField("Update Information")
 
 
-# Photo Form
+## Photo Form
 class PhotoForm(FlaskForm):
     photo = FileField(
         "Upload Photo",
@@ -182,7 +183,7 @@ class PhotoForm(FlaskForm):
     submit = SubmitField("Upload Photo")
 
 
-# Create Tag Form
+## Create Tag Form
 class CreateTagForm(FlaskForm):
     tag_name = StringField(
         label="Tag Name",
@@ -210,7 +211,7 @@ class CreateTagForm(FlaskForm):
     submit = SubmitField("Create")
 
 
-# Edit Tag Form
+## Edit Tag Form
 class EditTagForm(FlaskForm):
     tag_name = StringField(
         label="Tag Name",
@@ -247,14 +248,20 @@ def index():
         return redirect("/home")
 
 
-# Sign Up Page
+## Sign Up Page
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    """
+    Handles new user registration.
+    Validates form, hashes password, saves user to database, logs them in.
+    """
+
     form = SignUpForm()
     if form.validate_on_submit():
         if form.password.data == form.confirm_password.data:
             user = Users.query.filter_by(email=form.email.data).first()
             if user is None:
+                # Hash the password
                 password_hash = generate_password_hash(
                     form.password.data, "pbkdf2:sha256"
                 )
@@ -276,9 +283,15 @@ def signup():
     return render_template("signup.html", form=form)
 
 
-# Log In Page
+## Log In Page
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """
+    Handles logging users in with flask_login.
+    Validates form, verifies password, logs in user.
+    If user does not exist them the function returns an error message.
+    """
+
     form = LoginForm()
     if form.validate_on_submit():
         user = Users.query.filter_by(username=form.username.data).first()
@@ -295,26 +308,37 @@ def login():
     return render_template("login.html", form=form)
 
 
-# Logout User
+## Logout User
 @app.route("/logout")
 @login_required
 def logout():
+    """
+    Logs out user, redirects to login page.
+    """
     logout_user()
     flash("Successfully Logged Out.")
     return redirect("/login")
 
 
-# Home Page
+## Home Page
 @app.route("/home")
 @login_required
 def home():
     return render_template("home.html", username=current_user.username)
 
 
-# Gallery Page
+## Gallery Page
 @app.route("/gallery", methods=["GET", "POST"])
 @login_required
 def gallery():
+    """
+    Handles the photo gallery page.
+    Checks if user has photos, passes them to the page, runs checks to create
+    new tags if it doesn't already exist.
+
+    Includes sorting features for the photo query if the user selects an option.
+    """
+
     if Photos.query.filter_by(user=current_user.id).count() > 0:
         has_photos = True
     else:
@@ -337,6 +361,7 @@ def gallery():
             tag = None
         user_tags = current_user.tags
 
+        # Filter photo query
         if filter_button == "None":
             session["filter_button"] = None
         elif filter_button:
@@ -379,6 +404,7 @@ def gallery():
             img_filter = json.loads(session["filter_button"].replace("'", '"'))
         sort_by = session.get("sort_button", "Newest")
 
+    # Sort photo query
     if sort_by == "Newest":
         for photo in Photos.query.filter_by(user=current_user.id).order_by(
             Photos.date_added.desc()
@@ -398,10 +424,6 @@ def gallery():
             else:
                 photos.append(photo)
 
-        # photos.sort(reverse=True, key=lambda x: x.date_added)
-
-        # photos.sort(key=lambda x: x.date_added)
-
     return render_template(
         "gallery.html",
         photos=photos,
@@ -413,10 +435,15 @@ def gallery():
     )
 
 
-# Update User
+## Update User
 @app.route("/update-user", methods=["GET", "POST"])
 @login_required
 def update_user():
+    """
+    Handles updating user information.
+    Validates form, checks if information is already in use, updates database
+    from ID of the logged in user.
+    """
     form = UpdateAccountForm()
 
     if form.validate_on_submit():
@@ -456,10 +483,15 @@ def update_user():
     return render_template("update_user.html", form=form)
 
 
-# Delete User
+## Delete User
 @app.route("/delete-user")
 @login_required
 def delete_user():
+    """
+    Handles deleting logged in user.
+    Gets current user, logs them out, deletes database record, returns to main
+    index.
+    """
     user_to_delete = current_user
     photos = Photos.query.filter_by(user=user_to_delete.id)
 
@@ -479,10 +511,15 @@ def delete_user():
         return redirect("/update-user")
 
 
-# Upload Photo
+## Upload Photo
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
+    """
+    Handles uploading photos.
+    Validates form, checks if the photo is valid, creates the image file in
+    uploads folder, adds photo information to the database.
+    """
     form = PhotoForm()
 
     if form.validate_on_submit():
@@ -528,10 +565,15 @@ def upload():
     return render_template("upload.html", form=form)
 
 
-# Add tag to specified photo
+## Add tag to specified photo
 @app.route("/add_tag/<photo_id>")
 @login_required
 def add_tag(photo_id):
+    """
+    Handles adding tags to a photo.
+    Receives tag information, gets photo from database, adds tag to the photo in
+    the database, redirects to gallery.
+    """
     tag_name = request.args.get("tag_name")
     tag_colour = request.args.get("tag_colour")
 
@@ -558,10 +600,15 @@ def add_tag(photo_id):
     return redirect("/gallery")
 
 
-# Remove tag from specific photo
+## Remove tag from specific photo
 @app.route("/remove_tag/<photo_id>")
 @login_required
 def remove_tag(photo_id):
+    """
+    Handles removing tags from a photo.
+    Receives tag information, gets photo from database, searches photo for the
+    tag, removes the tag, redirects to gallery.
+    """
     tag_name = request.args.get("tag_name")
     tag_colour = request.args.get("tag_colour")
 
@@ -585,10 +632,15 @@ def remove_tag(photo_id):
     return redirect("/gallery")
 
 
-# Delete tag
+## Delete tag
 @app.route("/delete_tag/<tag>")
 @login_required
 def delete_tag(tag):
+    """
+    Handles deleting tags from the user.
+    Receives tag information, searches the user's tags, deletes the tag from
+    list, updates the database.
+    """
     tag = json.loads(tag.replace("'", '"'))
 
     user_tags = current_user.tags
@@ -618,10 +670,15 @@ def delete_tag(tag):
     return redirect("/manage_tags")
 
 
-# Delete Photo
+## Delete Photo
 @app.route("/delete_photo/<photo_id>")
 @login_required
 def delete_photo(photo_id):
+    """
+    Handles deleting photos.
+    Receives photo from the database, removes the record, redirects to the
+    gallery.
+    """
     photo = Photos.query.get_or_404(photo_id)
 
     try:
@@ -634,10 +691,13 @@ def delete_photo(photo_id):
     return redirect("/gallery")
 
 
-# Manage tags Page
+## Manage tags Page
 @app.route("/manage_tags", methods=["GET", "POST"])
 @login_required
 def manage_tags():
+    """
+    Validates form, edits tag information, updates database.
+    """
     form = EditTagForm()
 
     if form.validate_on_submit():
@@ -680,6 +740,7 @@ def manage_tags():
     )
 
 
+## Run Flask / Setup database
 if __name__ == "__main__":
     db_init(app)
-    app.run(debug=True)
+    app.run()
