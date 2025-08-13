@@ -1,20 +1,24 @@
-"""Taggr: A web app for uploading, tagging, and sorting photos.
+"""
+Taggr: A web app for uploading, tagging, and sorting photos.
 
 The program includes a simple to use tag system that the
 user can use to filter by in order to find specific categories of photo. The app
 integrates with multiple HTML documents for rendering the user interface.
 """
 
+import os
+import json
+from datetime import datetime
+
 from flask import Flask, render_template, redirect, flash, request, session
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+from flask_wtf.file import FileAllowed, FileRequired
 from flask_uploads import UploadSet, configure_uploads
 from wtforms import (
     StringField,
     SubmitField,
     EmailField,
     PasswordField,
-    FileField,
     SelectField,
 )
 from wtforms.validators import DataRequired, Length, Optional
@@ -29,14 +33,12 @@ from flask_login import (
 )
 from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
-from datetime import datetime
-import os
-import json
-
-app = Flask(__name__)
 
 from models import Users, Photos
 from db import db, db_init
+
+app = Flask(__name__)
+
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
 app.config["UPLOADED_PHOTOS_DEST"] = "static/uploads"
@@ -702,9 +704,7 @@ def manage_tags():
 
     if form.validate_on_submit():
         tag = [form.tag_name.data, form.tag_colour.data]
-        original_tag = json.loads(
-            request.form.get("original_tag").replace("'", '"')
-        )
+        original_tag = json.loads(request.form.get("original_tag").replace("'", '"'))
 
         try:
             tag_index = current_user.tags.index(original_tag)
