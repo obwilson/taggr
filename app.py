@@ -4,6 +4,8 @@ Taggr: A web app for uploading, tagging, and sorting photos.
 The program includes a simple to use tag system that the
 user can use to filter by in order to find specific categories of photo. The app
 integrates with multiple HTML documents for rendering the user interface.
+
+15/08/2025
 """
 
 import os
@@ -244,6 +246,10 @@ class EditTagForm(FlaskForm):
 # Index Page
 @app.route("/")
 def index():
+    """
+    If the user is logged in, redirect to home page. If there is no logged
+    in user, redirect to the sign-up page.
+    """
     if current_user is None:
         return redirect("/signup")
     else:
