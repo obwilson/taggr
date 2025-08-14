@@ -6,6 +6,8 @@ Includes a function to verify the user's hashed password against a plain string.
 
 Photos: Stores information around photos, tracked with uploaded UTC time. Stores
 the current user ID to reference back to the users model.
+
+15/08/2025
 """
 
 from db import db
