@@ -22,6 +22,7 @@ from wtforms import (
     EmailField,
     PasswordField,
     SelectField,
+    FileField,
 )
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash
